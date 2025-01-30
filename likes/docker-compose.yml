@@ -1,0 +1,22 @@
+name: likes
+
+services:
+  likes-backend:
+    build: 
+      context: src
+    expose:
+      - "8000"
+    env_file:
+      - ./.env
+    healthcheck:
+      test: curl --fail http://localhost:8000/healthcheck || exit 1
+      interval: 10s
+      retries: 5
+      timeout: 2s
+    networks:
+      - movies-net
+    restart: always
+    profiles: [likes]
+
+
+volumes:

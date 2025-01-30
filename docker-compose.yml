@@ -1,0 +1,45 @@
+name: main
+
+include:
+  - auth/docker-compose.yml
+# - search/docker-compose.yml
+# - etl-search/docker-compose.yml
+# - admin/docker-compose.yml
+  - ugc/docker-compose.yml
+# - etl-ugc/docker-compose.yml
+  - likes/docker-compose.yml
+
+
+services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./cfg/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./cfg/site.conf:/etc/nginx/conf.d/site.conf:ro
+      - static-volume:/data/static/:ro
+    healthcheck:
+      test: curl -so /dev/null --fail http://127.0.0.1/healthcheck || exit 1
+      interval: 10s
+      retries: 5
+      timeout: 2s
+    networks:
+      - movies-net
+    restart: always
+  
+  jaeger:
+    image: jaegertracing/all-in-one:1.52.0
+    ports:
+      - "6831:6831/udp"
+      - "16686:16686"
+    networks:
+      - movies-net
+    restart: always
+
+
+networks:
+  movies-net:
+
+volumes:
+  static-volume:
