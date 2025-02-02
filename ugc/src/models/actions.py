@@ -3,6 +3,12 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
+class Like(BaseModel):
+    user_id: str = Field(..., description="ID of the user performing the action")
+    film_id: Optional[str] = Field(..., description="ID of the film")
+    review_id: Optional[str] = Field(..., description="ID of the review")
+
+
 class BaseAction(BaseModel):
     user_id: str = Field(..., description="ID of the user performing the action")
     film_id: str = Field(..., description="ID of the film")

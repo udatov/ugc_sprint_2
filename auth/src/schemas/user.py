@@ -45,6 +45,7 @@ class RoleResponse(BaseModel):
 
 
 class UserWithRolesResponse(Login):
+    user_id: UUID
     first_name: Optional[str]
     last_name: Optional[str]
     roles: list[RoleResponse]

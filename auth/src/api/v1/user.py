@@ -165,6 +165,7 @@ async def signin(
         access_token=access_token,
         refresh_token=refresh_token,
         user=UserWithRolesResponse(
+            user_id=user.id,
             login=user.login,
             first_name=user.first_name,
             last_name=user.last_name,
@@ -311,6 +312,7 @@ async def verify_token(
     roles, _ = await token_service.generate_payload(user)
 
     user_response = UserWithRolesResponse(
+        user_id=user.id,
         login=user.login,
         first_name=user.first_name,
         last_name=user.last_name,

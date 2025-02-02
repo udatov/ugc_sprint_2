@@ -21,6 +21,8 @@ async def handle_action(
 
     Valid actions; categories; payload:
 
+        - like; add, remove; {user_id: str, film_id: Optional[str], review_id: Optional[str]}
+        - dislike; add, remove; {user_id: str, film_id: Optional[str], review_id: Optional[str]}
         - favorite; add, remove; {user_id: str, film_id: str}
         - rating; add, update; {user_id: str, film_id: str, score: Optional[float]}
         - review; add, update, remove; {user_id: str, film_id: str, review_id: Optional[str], content: Optional[str]}

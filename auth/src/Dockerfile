@@ -4,7 +4,7 @@ WORKDIR /opt/app
 
 ENV PYTHONPATH="/opt/app"  
 
-COPY requirements/prod.txt /opt/app/requirements.txt
+COPY ./requirements.txt /opt/app/requirements.txt
 
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
 

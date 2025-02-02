@@ -1,8 +1,8 @@
 from models import actions
 
 VALID_CATEGORIES = {
-    "dislike": {"topic": "like_events", "model": actions.BaseAction},
-    "like": {"topic": "like_events", "model": actions.BaseAction},
+    "dislike": {"topic": "like_events", "model": actions.Like},
+    "like": {"topic": "like_events", "model": actions.Like},
     "favorite": {"topic": "like_events", "model": actions.BaseAction},
     "rating": {"topic": "rating_events", "model": actions.RatingAction},
     "review": {"topic": "review_events", "model": actions.ReviewAction},
@@ -11,10 +11,10 @@ VALID_CATEGORIES = {
 }
 
 VALID_ACTIONS = {
-    "dislike": {"add", "remove"},    
+    "dislike": {"add", "remove"},
     "like": {"add", "remove"},
     "favorite": {"add", "remove"},
-    "rating": {"add", "update"},
+    "rating": {"add", "update", "remove"},
     "review": {"add", "update", "remove"},
     "watching": {"start", "stop"},
     "searching": {"query"},
@@ -27,6 +27,7 @@ like_events = {
     "action": "str",
     "timestamp": "datetime",
     "film_id": "str",
+    "review_id": "str",
 }
 
 rating_events = {
