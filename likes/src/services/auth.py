@@ -18,9 +18,7 @@ class PermService:
 
     @limiter.limit("20/minutes")
     @backoff.on_exception(backoff.expo, httpx.RequestError, interval=1, max_tries=5)
-    async def is_validuser(
-        self, request: Request, access_token: str
-    ) -> Optional[str]:
+    async def is_validuser(self, request: Request, access_token: str) -> Optional[str]:
         """
         Check if a user is a subscriber based on their access token.
 

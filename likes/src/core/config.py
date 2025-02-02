@@ -1,5 +1,4 @@
 from logging import config as logging_config
-from typing import Optional
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 

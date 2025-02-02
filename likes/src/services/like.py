@@ -1,12 +1,21 @@
-from db.models import User, Film, Review, RatedFilm
-from fastapi import HTTPException
-from bson import ObjectId
 from datetime import datetime
 from functools import lru_cache
 
+from bson import ObjectId
+from db.models import Film, RatedFilm, Review, User
+from fastapi import HTTPException
+
 
 class LikeService:
-    async def increment_value(self, user_id: str, film_id: str, user_field: str, film_field: str, increment_value: int, error_message: str) -> bool:
+    async def increment_value(
+        self,
+        user_id: str,
+        film_id: str,
+        user_field: str,
+        film_field: str,
+        increment_value: int,
+        error_message: str,
+    ) -> bool:
         """
         General method for handling boolean operations like adding/removing likes, dislikes, or favorites.
         """
@@ -34,12 +43,16 @@ class LikeService:
         Add or update a rating for a film by a user.
         """
         if rating < 0 or rating > 10:
-            raise HTTPException(status_code=400, detail="Rating must be between 0 and 10.")
+            raise HTTPException(
+                status_code=400, detail="Rating must be between 0 and 10."
+            )
 
         user = await self.get_or_create_user(user_id)
         film = await self.get_or_create_film(film_id)
 
-        existing_rating = next((r for r in user.rated_films if r.film_id == film_id), None)
+        existing_rating = next(
+            (r for r in user.rated_films if r.film_id == film_id), None
+        )
 
         if existing_rating:
             film.total_score = film.total_score - existing_rating.score + rating
@@ -49,7 +62,9 @@ class LikeService:
             film.raiting_count += 1
             film.total_score += rating
 
-        film.average_rating = film.total_score / film.raiting_count if film.raiting_count > 0 else 0
+        film.average_rating = (
+            film.total_score / film.raiting_count if film.raiting_count > 0 else 0
+        )
 
         await user.save()
         await film.save()
@@ -58,12 +73,17 @@ class LikeService:
         user = await self.get_or_create_user(user_id)
         film = await self.get_or_create_film(film_id)
 
-        existing_rating = next((r for r in user.rated_films if r.film_id == film_id), None)
+        existing_rating = next(
+            (r for r in user.rated_films if r.film_id == film_id), None
+        )
         if not existing_rating:
             raise HTTPException(status_code=404, detail="Rated film not found.")
 
         film.average_rating = (
-            (film.average_rating * film.raiting_count - existing_rating.score) / (film.raiting_count - 1) if film.raiting_count > 1 else 0
+            (film.average_rating * film.raiting_count - existing_rating.score)
+            / (film.raiting_count - 1)
+            if film.raiting_count > 1
+            else 0
         )
         film.raiting_count -= 1
         user.rated_films.remove(existing_rating)
@@ -71,14 +91,18 @@ class LikeService:
         await user.save()
         await film.save()
 
-    async def add_or_update_review(self, user_id: str, film_id: str, content: str) -> str:
+    async def add_or_update_review(
+        self, user_id: str, film_id: str, content: str
+    ) -> str:
         """
         Add or update a review for a film by a user.
         """
         await self.get_or_create_user(user_id)
         film = await self.get_or_create_film(film_id)
 
-        review = await Review.find_one(Review.user_id == user_id, Review.film_id == film_id)
+        review = await Review.find_one(
+            Review.user_id == user_id, Review.film_id == film_id
+        )
 
         if review:
             review.content = content
@@ -104,7 +128,9 @@ class LikeService:
         """
         Delete a user's review for a film.
         """
-        review = await Review.find_one(Review.user_id == user_id, Review.film_id == film_id)
+        review = await Review.find_one(
+            Review.user_id == user_id, Review.film_id == film_id
+        )
         if not review:
             raise HTTPException(status_code=404, detail="Review not found.")
 
@@ -155,7 +181,8 @@ class LikeService:
             "liked_films": user.liked_films,
             "disliked_films": user.disliked_films,
             "rated_films": [
-                {"film_id": rated.film_id, "rating": rated.rating} for rated in user.rated_films
+                {"film_id": rated.film_id, "rating": rated.rating}
+                for rated in user.rated_films
             ],
             "favorite_films": user.favorite_films,
         }

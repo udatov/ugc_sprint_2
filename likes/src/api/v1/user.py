@@ -11,7 +11,7 @@ async def get_user(
     request: Request,
     like_service: LikeService = Depends(get_like_service),
     auth_service: PermService = Depends(get_perm_service),
-    access_token: str = Query(..., description="Access token of the user")
+    access_token: str = Query(..., description="Access token of the user"),
 ) -> dict:
     """
     Retrieve user details by token.

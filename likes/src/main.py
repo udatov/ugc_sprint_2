@@ -24,8 +24,9 @@ tracer = trace.get_tracer(__name__)
 async def lifespan(app: FastAPI):
     cache: Redis = Redis(host=settings.redis.host, port=settings.redis.port)
     motor: AsyncIOMotorClient = AsyncIOMotorClient(settings.mongo.url)
-    await init_beanie(database=motor[settings.mongo.database],
-                      document_models=[User, Film, Review])
+    await init_beanie(
+        database=motor[settings.mongo.database], document_models=[User, Film, Review]
+    )
     yield
     await cache.close()
     motor.close()
