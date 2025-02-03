@@ -1,7 +1,10 @@
 from typing import Any, Optional
+from uuid import UUID
 
+from core.config import settings
 from core.content import FILM_VALID_CATEGORIES
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi_cache.decorator import cache
 from schemas.responses import FilmResponse
 from services.auth import PermService, get_perm_service
 from services.like import LikeService, get_like_service
@@ -12,7 +15,7 @@ router = APIRouter()
 
 @router.post("/{film_id}/{category}")
 async def add_film_status(
-    film_id: str,
+    film_id: UUID,
     category: str,
     request: Request,
     payload: Optional[dict[str, Any]] = None,
@@ -36,27 +39,28 @@ async def add_film_status(
             user_id, film_id, payload["content"]
         )
         ugc_payload = {
-            "user_id": user_id,
-            "film_id": film_id,
-            "review_id": review_id,
+            "user_id": str(user_id),
+            "film_id": str(film_id),
+            "review_id": str(review_id),
             "content": payload["content"],
         }
         await ugc_service.send_stat(category, "add", ugc_payload)
         return {"message": "Review added successfully.", "review_id": review_id}
 
     if category == "rating":
-        if not payload or "rating" not in payload:
+        if not payload or "score" not in payload:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Rating is required."
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Score in payload is required.",
             )
-        await like_service.rate_film(user_id, film_id, payload["rating"])
+        await like_service.rate_film(user_id, film_id, float(payload["score"]))
         ugc_payload = {
-            "user_id": user_id,
-            "film_id": film_id,
-            "score": payload["rating"],
+            "user_id": str(user_id),
+            "film_id": str(film_id),
+            "score": payload["score"],
         }
         await ugc_service.send_stat(category, "add", ugc_payload)
-        return {"message": f"Film rated successfully with score {payload['rating']}."}
+        return {"message": f"Film rated successfully with score {payload['score']}."}
 
     category_config = FILM_VALID_CATEGORIES.get(category)
     if not category_config:
@@ -73,14 +77,14 @@ async def add_film_status(
         1,
         error_message=f"Cannot add {category} as it already exists.",
     )
-    ugc_payload = {"user_id": user_id, "film_id": film_id}
+    ugc_payload = {"user_id": str(user_id), "film_id": str(film_id)}
     await ugc_service.send_stat(category, "add", ugc_payload)
     return {"message": f"{category} added successfully."}
 
 
 @router.delete("/{film_id}/{category}")
 async def delete_film_status(
-    film_id: str,
+    film_id: UUID,
     category: str,
     request: Request,
     like_service: LikeService = Depends(get_like_service),
@@ -95,13 +99,17 @@ async def delete_film_status(
 
     if category == "review":
         review_id = await like_service.delete_review(user_id, film_id)
-        ugc_payload = {"user_id": user_id, "film_id": film_id, "review_id": review_id}
+        ugc_payload = {
+            "user_id": str(user_id),
+            "film_id": str(film_id),
+            "review_id": str(review_id),
+        }
         await ugc_service.send_stat(category, "remove", ugc_payload)
         return {"message": "Review deleted successfully."}
 
     if category == "rating":
         await like_service.unrate_film(user_id, film_id)
-        ugc_payload = {"user_id": user_id, "film_id": film_id}
+        ugc_payload = {"user_id": str(user_id), "film_id": str(film_id)}
         await ugc_service.send_stat(category, "remove", ugc_payload)
         return {"message": "Rating removed successfully."}
 
@@ -120,14 +128,14 @@ async def delete_film_status(
         -1,
         error_message=f"Cannot remove {category} as it does not exist.",
     )
-    ugc_payload = {"user_id": user_id, "film_id": film_id}
+    ugc_payload = {"user_id": str(user_id), "film_id": str(film_id)}
     await ugc_service.send_stat(category, "remove", ugc_payload)
     return {"message": f"{category} removed successfully."}
 
 
 @router.put("/{film_id}/{category}")
 async def update_film_status(
-    film_id: str,
+    film_id: UUID,
     category: str,
     request: Request,
     payload: dict[str, Any],
@@ -151,28 +159,28 @@ async def update_film_status(
             user_id, film_id, payload["content"]
         )
         ugc_payload = {
-            "user_id": user_id,
-            "film_id": film_id,
-            "review_id": review_id,
+            "user_id": str(user_id),
+            "film_id": str(film_id),
+            "review_id": str(review_id),
             "content": payload["content"],
         }
         await ugc_service.send_stat(category, "update", ugc_payload)
         return {"message": "Review updated successfully."}
 
     if category == "rating":
-        if not payload or "rating" not in payload:
+        if not payload or "score" not in payload:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="New rating is required.",
             )
-        await like_service.rate_film(user_id, film_id, payload["rating"])
+        await like_service.rate_film(user_id, film_id, float(payload["score"]))
         ugc_payload = {
-            "user_id": user_id,
-            "film_id": film_id,
-            "score": payload["rating"],
+            "user_id": str(user_id),
+            "film_id": str(film_id),
+            "score": payload["score"],
         }
         await ugc_service.send_stat(category, "update", ugc_payload)
-        return {"message": f"Rating updated successfully to {payload['rating']}."}
+        return {"message": f"Rating updated successfully to {payload['score']}."}
 
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
@@ -181,8 +189,9 @@ async def update_film_status(
 
 
 @router.get("/{film_id}", response_model=FilmResponse)
+@cache(expire=settings.cache_expire_in_seconds)
 async def get_film(
-    film_id: str,
+    film_id: UUID,
     request: Request,
     like_service: LikeService = Depends(get_like_service),
     auth_service: PermService = Depends(get_perm_service),

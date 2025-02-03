@@ -70,9 +70,10 @@ async def handle_action(
                 user_id=user_id, category=category, action=action, details=event_data
             )
 
-    except Exception:
+    except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Server error"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error {e}",
         )
 
     return {"message": f"Action '{action}' performed for category '{category}'"}

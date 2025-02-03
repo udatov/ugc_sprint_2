@@ -16,8 +16,8 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./cfg/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./cfg/site.conf:/etc/nginx/conf.d/site.conf:ro
+      - ./infra/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/site.conf:/etc/nginx/conf.d/site.conf:ro
       - static-volume:/data/static/:ro
     healthcheck:
       test: curl -so /dev/null --fail http://127.0.0.1/healthcheck || exit 1

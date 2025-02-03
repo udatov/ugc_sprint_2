@@ -1,18 +1,20 @@
 import json
+import logging
 from datetime import datetime
 from functools import lru_cache
 from uuid import UUID
 
-import backoff
 from core.config import settings
 from db.kafka import kafka_producer
+
+logger = logging.getLogger(settings.project)
 
 
 class StatService:
     def __init__(self):
         self.producer = kafka_producer
 
-    @backoff.on_exception(backoff.expo, Exception, interval=1, max_tries=5)
+    # @backoff.on_exception(backoff.expo, Exception, interval=1, max_tries=5)
     async def _send_to_kafka(self, topic: str, event: dict, key: str):
         """
         Internal method to send an event to a Kafka topic.
@@ -22,13 +24,13 @@ class StatService:
         :param key: The key associated with the event for partitioning.
         """
         try:
-            await self.producer.send(
+            self.producer.send(
                 topic=topic,
                 value=json.dumps(event).encode("utf-8"),
                 key=key.encode("utf-8"),
             )
         except Exception as e:
-            print(f"Error sending event to Kafka '{topic}': {e}")
+            logger.error(f"Error sending event to Kafka '{topic}': {e}")
 
     async def log_event(
         self, topic: str, user_id: str, action: str, category: str, **kwargs

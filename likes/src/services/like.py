@@ -1,12 +1,27 @@
 from datetime import datetime
 from functools import lru_cache
+from uuid import UUID
 
-from bson import ObjectId
 from db.models import Film, RatedFilm, Review, User
 from fastapi import HTTPException
 
 
 class LikeService:
+    async def get_or_create_user(self, user_id: str) -> User:
+        user_id = UUID(user_id)
+        user = await User.find_one(User.id == user_id)
+        if not user:
+            user = User(id=user_id)
+            await user.insert()
+        return user
+
+    async def get_or_create_film(self, film_id: str) -> Film:
+        film = await Film.find_one(Film.id == film_id)
+        if not film:
+            film = Film(id=film_id)
+            await film.insert()
+        return film
+
     async def increment_value(
         self,
         user_id: str,
@@ -21,6 +36,13 @@ class LikeService:
         """
         user = await self.get_or_create_user(user_id)
         film = await self.get_or_create_film(film_id)
+
+        user_field_value = getattr(user, user_field, None)
+        if user_field_value is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid user field: {user_field} for {user}, and {user_field_value}",
+            )
 
         if increment_value > 0:
             if film_id in getattr(user, user_field):
@@ -55,15 +77,19 @@ class LikeService:
         )
 
         if existing_rating:
-            film.total_score = film.total_score - existing_rating.score + rating
+            total_score = (
+                film.average_rating * film.raiting_count
+                - existing_rating.score
+                + rating
+            )
             existing_rating.score = rating
         else:
             user.rated_films.append(RatedFilm(film_id=film_id, score=rating))
+            total_score = film.average_rating * film.raiting_count + rating
             film.raiting_count += 1
-            film.total_score += rating
 
         film.average_rating = (
-            film.total_score / film.raiting_count if film.raiting_count > 0 else 0
+            total_score / film.raiting_count if film.raiting_count > 0 else 0
         )
 
         await user.save()
@@ -94,24 +120,20 @@ class LikeService:
     async def add_or_update_review(
         self, user_id: str, film_id: str, content: str
     ) -> str:
-        """
-        Add or update a review for a film by a user.
-        """
-        await self.get_or_create_user(user_id)
+        user = await self.get_or_create_user(user_id)
         film = await self.get_or_create_film(film_id)
 
         review = await Review.find_one(
-            Review.user_id == user_id, Review.film_id == film_id
+            Review.user_id == user.id, Review.film_id == film.id
         )
 
         if review:
             review.content = content
             review.timestamp = datetime.now()
             await review.save()
-            return review.id
+            return str(review.id)
         else:
             new_review = Review(
-                review_id=str(ObjectId()),
                 user_id=user_id,
                 film_id=film_id,
                 content=content,
@@ -119,17 +141,20 @@ class LikeService:
             )
             await new_review.insert()
 
-            film.reviews_count += 1
-            await film.save()
+        film.reviews_count += 1
+        await film.save()
 
-            return new_review.review_id
+        return str(new_review.id)
 
     async def delete_review(self, user_id: str, film_id: str) -> None:
         """
         Delete a user's review for a film.
         """
+        user = await self.get_or_create_user(user_id)
+        film = await self.get_or_create_film(film_id)
+
         review = await Review.find_one(
-            Review.user_id == user_id, Review.film_id == film_id
+            Review.user_id == user.id, Review.film_id == film.id
         )
         if not review:
             raise HTTPException(status_code=404, detail="Review not found.")
@@ -143,27 +168,13 @@ class LikeService:
 
         return review_id
 
-    async def get_or_create_user(self, user_id: str) -> User:
-        user = await User.find_one(User.user_id == user_id)
-        if not user:
-            user = User(user_id=user_id)
-            await user.insert()
-        return user
-
-    async def get_or_create_film(self, film_id: str) -> Film:
-        film = await Film.find_one(Film.film_id == film_id)
-        if not film:
-            film = Film(film_id=film_id)
-            await film.insert()
-        return film
-
     async def get_film_info(self, film_id: str) -> dict:
         """
         Retrieve film statistics and details.
         """
         film = await self.get_or_create_film(film_id)
         return {
-            "film_id": film.film_id,
+            "film_id": film.id,
             "likes_count": film.likes_count,
             "dislikes_count": film.dislikes_count,
             "average_rating": film.average_rating,
@@ -177,11 +188,11 @@ class LikeService:
         """
         user = await self.get_or_create_user(user_id)
         return {
-            "user_id": user.user_id,
+            "user_id": user.id,
             "liked_films": user.liked_films,
             "disliked_films": user.disliked_films,
             "rated_films": [
-                {"film_id": rated.film_id, "rating": rated.rating}
+                {"film_id": rated.film_id, "score": rated.score}
                 for rated in user.rated_films
             ],
             "favorite_films": user.favorite_films,

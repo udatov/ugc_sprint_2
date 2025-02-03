@@ -34,7 +34,7 @@ class Settings(BaseSettings):
 
     project: str = "likes"
     cache_expire_in_seconds: int = 60 * 5
-    use_cache: bool = True
+    use_cache: bool = False
     enable_tracer: bool = False
     AUTH_API_URL: str = "http://nginx/auth/api/v1/user/verify"
     UGC_API_URL: str = "http://nginx/ugc/api/v1"

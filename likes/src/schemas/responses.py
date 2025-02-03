@@ -1,8 +1,15 @@
+from uuid import UUID
+
 from pydantic import BaseModel
 
 
+class RatedFilm(BaseModel):
+    film_id: UUID
+    score: float
+
+
 class FilmResponse(BaseModel):
-    film_id: str
+    film_id: UUID
     likes_count: int
     dislikes_count: int
     average_rating: float
@@ -11,8 +18,8 @@ class FilmResponse(BaseModel):
 
 
 class UserResponse(BaseModel):
-    user_id: str
-    liked_films: list[str]
-    disliked_films: list[str]
-    rated_films: list[dict]
-    favorite_films: list[str]
+    user_id: UUID
+    liked_films: list[UUID]
+    disliked_films: list[UUID]
+    rated_films: list[RatedFilm]
+    favorite_films: list[UUID]

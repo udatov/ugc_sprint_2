@@ -1,14 +1,10 @@
 import logging
 from functools import lru_cache
 
-import backoff
 import httpx
 from core.config import settings
 from fastapi import status
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
-limiter = Limiter(key_func=get_remote_address)
 logger = logging.getLogger(settings.project)
 
 
@@ -17,7 +13,6 @@ class UgcService:
     Service for handling User Generated Content (UGC) statistics.
     """
 
-    @backoff.on_exception(backoff.expo, httpx.RequestError, interval=1, max_tries=2)
     async def send_stat(self, category: str, action: str, payload: dict) -> None:
         """
         Send statistics to the defined UGC API.

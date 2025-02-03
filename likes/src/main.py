@@ -10,6 +10,8 @@ from core.tracer import configure_tracer
 from db.models import Film, Review, User
 from fastapi import FastAPI, Request, status
 from fastapi.responses import ORJSONResponse
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
 from motor.motor_asyncio import AsyncIOMotorClient
 from opentelemetry import trace
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
@@ -24,6 +26,9 @@ tracer = trace.get_tracer(__name__)
 async def lifespan(app: FastAPI):
     cache: Redis = Redis(host=settings.redis.host, port=settings.redis.port)
     motor: AsyncIOMotorClient = AsyncIOMotorClient(settings.mongo.url)
+    FastAPICache.init(
+        RedisBackend(cache), prefix="fastapi-cache", enable=settings.use_cache
+    )
     await init_beanie(
         database=motor[settings.mongo.database], document_models=[User, Film, Review]
     )

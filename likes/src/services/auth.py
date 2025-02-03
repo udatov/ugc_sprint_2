@@ -1,7 +1,6 @@
 from functools import lru_cache
 from typing import Optional
 
-import backoff
 import httpx
 from core.config import settings
 from fastapi import HTTPException, Request, status
@@ -17,7 +16,7 @@ class PermService:
     """
 
     @limiter.limit("20/minutes")
-    @backoff.on_exception(backoff.expo, httpx.RequestError, interval=1, max_tries=5)
+    # @backoff.on_exception(backoff.expo, httpx.RequestError, max_tries=5, factor=2, max_delay=60)
     async def is_validuser(self, request: Request, access_token: str) -> Optional[str]:
         """
         Check if a user is a subscriber based on their access token.
@@ -38,7 +37,7 @@ class PermService:
                 if response.status_code != status.HTTP_200_OK:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="Invalid request",
+                        detail="Invalid token or User not authenticated",
                     )
 
                 data = response.json()
