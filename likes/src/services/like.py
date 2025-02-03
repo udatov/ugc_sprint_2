@@ -8,6 +8,12 @@ from fastapi import HTTPException
 
 class LikeService:
     async def get_or_create_user(self, user_id: str) -> User:
+        """
+        Get an existing user or create a new one if it does not exist.
+
+        :param user_id: The ID of the user to retrieve or create.
+        :returns: The User object corresponding to the provided user_id.
+        """
         user_id = UUID(user_id)
         user = await User.find_one(User.id == user_id)
         if not user:
@@ -16,6 +22,12 @@ class LikeService:
         return user
 
     async def get_or_create_film(self, film_id: str) -> Film:
+        """
+        Get an existing film or create a new one if it does not exist.
+
+        :param film_id: The ID of the film to retrieve or create.
+        :returns: The Film object corresponding to the provided film_id.
+        """
         film = await Film.find_one(Film.id == film_id)
         if not film:
             film = Film(id=film_id)
@@ -33,6 +45,15 @@ class LikeService:
     ) -> bool:
         """
         General method for handling boolean operations like adding/removing likes, dislikes, or favorites.
+
+        :param user_id: The ID of the user performing the action.
+        :param film_id: The ID of the film to which the action is related.
+        :param user_field: The field in the user object to be modified (e.g., liked_films).
+        :param film_field: The field in the film object to be modified (e.g., likes_count).
+        :param increment_value: The value to increment or decrement (positive for addition, negative for removal).
+        :param error_message: The error message to return if the operation fails.
+        :returns: A boolean indicating the success of the operation.
+        :raises HTTPException: If the user field or film field is invalid, or if the action cannot be performed.
         """
         user = await self.get_or_create_user(user_id)
         film = await self.get_or_create_film(film_id)
@@ -63,6 +84,11 @@ class LikeService:
     async def rate_film(self, user_id: str, film_id: str, rating: float) -> None:
         """
         Add or update a rating for a film by a user.
+
+        :param user_id: The ID of the user rating the film.
+        :param film_id: The ID of the film being rated.
+        :param rating: The rating to assign to the film (should be between 0 and 10).
+        :raises HTTPException: If the rating is out of bounds.
         """
         if rating < 0 or rating > 10:
             raise HTTPException(
@@ -96,6 +122,13 @@ class LikeService:
         await film.save()
 
     async def unrate_film(self, user_id: str, film_id: str) -> None:
+        """
+        Remove a user's rating for a film.
+
+        :param user_id: The ID of the user removing the rating.
+        :param film_id: The ID of the film for which the rating is being removed.
+        :raises HTTPException: If the user has not rated the film.
+        """
         user = await self.get_or_create_user(user_id)
         film = await self.get_or_create_film(film_id)
 
@@ -120,6 +153,15 @@ class LikeService:
     async def add_or_update_review(
         self, user_id: str, film_id: str, content: str
     ) -> str:
+        """
+        Add a new review or update an existing review for a film by a user.
+
+        :param user_id: The ID of the user adding or updating a review.
+        :param film_id: The ID of the film being reviewed.
+        :param content: The content of the review.
+        :returns: The ID of the review.
+        :raises HTTPException: If a review update fails.
+        """
         user = await self.get_or_create_user(user_id)
         film = await self.get_or_create_film(film_id)
 
@@ -149,6 +191,10 @@ class LikeService:
     async def delete_review(self, user_id: str, film_id: str) -> None:
         """
         Delete a user's review for a film.
+
+        :param user_id: The ID of the user deleting the review.
+        :param film_id: The ID of the film for which the review is being deleted.
+        :raises HTTPException: If the review is not found.
         """
         user = await self.get_or_create_user(user_id)
         film = await self.get_or_create_film(film_id)
@@ -171,6 +217,10 @@ class LikeService:
     async def get_film_info(self, film_id: str) -> dict:
         """
         Retrieve film statistics and details.
+
+        :param film_id: The ID of the film to retrieve information for.
+        :returns: A dictionary containing film statistics.
+        :raises HTTPException: If the film cannot be found or created.
         """
         film = await self.get_or_create_film(film_id)
         return {
@@ -185,6 +235,9 @@ class LikeService:
     async def get_user_info(self, user_id: str) -> dict:
         """
         Retrieve user details including liked/disliked/rated/favorite films.
+
+        :param user_id: The ID of the user to retrieve information for.
+        :returns: A dictionary containing user information.
         """
         user = await self.get_or_create_user(user_id)
         return {
@@ -202,6 +255,6 @@ class LikeService:
 @lru_cache()
 def get_like_service() -> LikeService:
     """
-    Dependency to get a singleton instance of LikeService.
+    :returns: An instance of LikeService.
     """
     return LikeService()

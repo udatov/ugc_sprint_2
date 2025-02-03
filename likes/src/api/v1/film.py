@@ -25,7 +25,15 @@ async def add_film_status(
     access_token: str = Query(..., description="Access token of the user"),
 ) -> dict:
     """
-    Add a like, dislike, or favorite for a film, or post a review or rate a film.
+    Endpoint to add a like, dislike, or favorite for a film, or post a review or rate a film.
+
+    Valid categories; payload:
+
+        - like;
+        - dislike;
+        - favorite;
+        - rating; {score: float}
+        - review; {content: str}
     """
     user_id = await auth_service.is_validuser(request, access_token)
 
@@ -93,7 +101,14 @@ async def delete_film_status(
     access_token: str = Query(..., description="Access token of the user"),
 ) -> dict:
     """
-    Remove like, dislike, or favorite for a film, or delete a review or remove a rating.
+    Endpoint to remove like, dislike, or favorite for a film, or delete a review or remove a rating.
+    Valid categories; payload:
+
+        - like;
+        - dislike;
+        - favorite;
+        - rating;
+        - review;
     """
     user_id = await auth_service.is_validuser(request, access_token)
 
@@ -145,7 +160,12 @@ async def update_film_status(
     access_token: str = Query(..., description="Access token of the user"),
 ) -> dict:
     """
-    Update a review or rating for a film by a user.
+    Endpoint to update a review or rating for a film by a user.
+
+    Valid categories; payload:
+
+        - rating; {score: float}
+        - review; {content: str}
     """
     user_id = await auth_service.is_validuser(request, access_token)
 

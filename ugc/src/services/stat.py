@@ -4,6 +4,7 @@ from datetime import datetime
 from functools import lru_cache
 from uuid import UUID
 
+import backoff
 from core.config import settings
 from db.kafka import kafka_producer
 
@@ -14,7 +15,7 @@ class StatService:
     def __init__(self):
         self.producer = kafka_producer
 
-    # @backoff.on_exception(backoff.expo, Exception, interval=1, max_tries=5)
+    @backoff.on_exception(backoff.expo, Exception, max_time=60)
     async def _send_to_kafka(self, topic: str, event: dict, key: str):
         """
         Internal method to send an event to a Kafka topic.

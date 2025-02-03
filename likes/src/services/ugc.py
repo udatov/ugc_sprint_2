@@ -18,7 +18,7 @@ class UgcService:
         Send statistics to the defined UGC API.
 
         :param category: The category of the UGC, indicating the type of content.
-        :param action: The action to perform (e.g. 'create', 'update').
+        :param action: The action to perform (e.g. 'add', 'update').
         :param payload: The data to send in the request body.
         :returns: None
         """
@@ -64,6 +64,6 @@ class UgcService:
 @lru_cache()
 def get_ugc_service() -> UgcService:
     """
-    Get an instance of UgcService.
+    :returns: An instance of UgcService.
     """
     return UgcService()
