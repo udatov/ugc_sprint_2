@@ -58,7 +58,7 @@ jobs:
         mypy --html-report reports/ugc/mypy/ ugc || true
 
     - name: Upload HTML reports
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: lint-and-typecheck-reports
         path: reports/
