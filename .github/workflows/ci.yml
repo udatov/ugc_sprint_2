@@ -1,0 +1,72 @@
+name: github-ci
+
+on:
+  push:
+    branches: [api, main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-typecheck:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+    - name: Checkout the repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install wemake-python-styleguide flake8-html mypy
+
+    - name: Lint with wemake-python-styleguide (likes)
+      run: |
+        mkdir -p reports/likes/wemake-python-styleguide/
+        flake8 likes --exit-zero --format=html --htmldir=reports/likes/wemake-python-styleguide/
+
+    - name: Lint with wemake-python-styleguide (auth)
+      run: |
+        mkdir -p reports/auth/wemake-python-styleguide/
+        flake8 auth --exit-zero --format=html --htmldir=reports/auth/wemake-python-styleguide/
+
+    - name: Lint with wemake-python-styleguide (ugc)
+      run: |
+        mkdir -p reports/ugc/wemake-python-styleguide/
+        flake8 ugc --exit-zero --format=html --htmldir=reports/ugc/wemake-python-styleguide/
+
+    - name: Perform type checking with mypy (likes)
+      run: |
+        mkdir -p reports/likes/mypy/
+        mypy --html-report reports/likes/mypy/ likes || true
+
+    - name: Perform type checking with mypy (auth)
+      run: |
+        mkdir -p reports/auth/mypy/
+        mypy --html-report reports/auth/mypy/ auth || true
+
+    - name: Perform type checking with mypy (ugc)
+      run: |
+        mkdir -p reports/ugc/mypy/
+        mypy --html-report reports/ugc/mypy/ ugc || true
+
+    - name: Upload HTML reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: lint-and-typecheck-reports-${{ matrix.python-version }}
+        path: reports/
+
+    - name: Send Telegram notification
+      if: ${{ job.status }} == success || cancelled() == false
+      uses: xinthink/action-telegram@v1.1
+      with:
+        botToken: ${{ secrets.TLGRAM_BOT_TOKEN }}
+        chatId: ${{ secrets.TLGRAM_CHAT_ID }}
+        jobStatus: ${{ job.status }}

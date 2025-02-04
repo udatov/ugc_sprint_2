@@ -1,0 +1,65 @@
+name: auth
+
+services:
+  auth-backend:
+    build: 
+      context: src
+    expose:
+      - "8000"
+    env_file:
+      - ./.env
+    healthcheck:
+      test: curl --fail http://localhost:8000/healthcheck || exit 1
+      interval: 10s
+      retries: 5
+      timeout: 2s
+    depends_on:
+      auth-postgres:
+        condition: service_healthy
+      auth-redis:
+        condition: service_healthy
+    networks:
+      - movies-net
+    restart: always
+    profiles: [auth]
+
+  auth-postgres:
+    image: postgres:16.4-alpine
+    env_file:
+      - ./.env
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+    expose:
+      - "5432"
+    user: postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    restart: always
+    volumes:
+      - auth-db-volume:/var/lib/postgresql/data
+    networks:
+      - movies-net
+    profiles: [auth]
+
+  auth-redis:
+    image: redis:7.4
+    expose:
+      - "6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 10s
+      retries: 5
+      timeout: 2s
+    volumes:
+      - auth-redis-volume:/data
+    networks:
+      - movies-net
+    restart: always
+    profiles: [auth]
+
+volumes:
+  auth-db-volume:
+  auth-redis-volume:
