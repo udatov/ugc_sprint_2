@@ -20,8 +20,8 @@ services:
 
   likes-mongodb:
     image: mongo
-    ports:
-      - "27017:27017"
+    expose:
+      - "27017"
     restart: unless-stopped
     volumes:
       - likes-db-mongo:/data/db:rw
@@ -32,8 +32,8 @@ services:
 
   likes-redis:
     image: redis:7.4
-    ports:
-      - "6379:6379"
+    expose:
+      - "6379"
     healthcheck:
       test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
       interval: 10s

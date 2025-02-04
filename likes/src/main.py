@@ -16,6 +16,8 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from opentelemetry import trace
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from redis.asyncio import Redis
+from sentry_sdk import init
+from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from services.health import router as health_router
 
 logger = logging.getLogger(__name__)
@@ -44,6 +46,10 @@ app = FastAPI(
     default_response_class=ORJSONResponse,
     lifespan=lifespan,
 )
+
+if settings.enable_sentry:
+    init(dsn=settings.sentry_dsn, traces_sample_rate=settings.sentry_traces_sample_rate)
+    app.add_middleware(SentryAsgiMiddleware)
 
 if settings.enable_tracer:
     configure_tracer()

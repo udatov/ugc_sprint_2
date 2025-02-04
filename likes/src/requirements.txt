@@ -17,3 +17,4 @@ motor>=3.7.0
 beanie>=1.29.0
 backoff>=2.2.1
 httpx>=0.28.1
+sentry-sdk>=2.20.0

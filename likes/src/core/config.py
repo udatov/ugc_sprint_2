@@ -1,5 +1,6 @@
 from logging import config as logging_config
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .logger import LOGGING
@@ -36,6 +37,9 @@ class Settings(BaseSettings):
     cache_expire_in_seconds: int = 60 * 5
     use_cache: bool = False
     enable_tracer: bool = False
+    enable_sentry: bool = False
+    sentry_dsn: str = Field('https://sentry-api:9000', env='SENTRY_DSN')
+    sentry_traces_sample_rate: float = 1.0
     AUTH_API_URL: str = "http://nginx/auth/api/v1/user/verify"
     UGC_API_URL: str = "http://nginx/ugc/api/v1"
     redis: RedisSetting = RedisSetting()
