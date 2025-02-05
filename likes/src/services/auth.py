@@ -3,20 +3,20 @@ from typing import Optional
 
 import backoff
 import httpx
-from core.config import settings
 from fastapi import HTTPException, Request, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-limiter = Limiter(key_func=get_remote_address)
+from core.config import settings
+
+limiter = Limiter(key_func=get_remote_address, enabled=settings.enable_limiter)
 
 
 class PermService:
     """
     Service for managing access to content. Provides methods to check user validity.
     """
-
-    @limiter.limit("20/minutes")
+    @limiter.limit("10/minute")
     @backoff.on_exception(
         backoff.expo, (httpx.HTTPStatusError, httpx.RequestError), max_time=60
     )

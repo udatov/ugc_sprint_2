@@ -2,8 +2,10 @@ from datetime import datetime
 from functools import lru_cache
 from uuid import UUID
 
+from fastapi import HTTPException, status
+
 from db.models import Film, RatedFilm, Review, User
-from fastapi import HTTPException
+
 
 
 class LikeService:
@@ -61,17 +63,17 @@ class LikeService:
         user_field_value = getattr(user, user_field, None)
         if user_field_value is None:
             raise HTTPException(
-                status_code=400,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid user field: {user_field} for {user}, and {user_field_value}",
             )
 
         if increment_value > 0:
             if film_id in getattr(user, user_field):
-                raise HTTPException(status_code=400, detail=error_message)
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_message)
             getattr(user, user_field).append(film_id)
         else:
             if film_id not in getattr(user, user_field):
-                raise HTTPException(status_code=400, detail=error_message)
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_message)
             getattr(user, user_field).remove(film_id)
 
         await user.save()
@@ -92,7 +94,7 @@ class LikeService:
         """
         if rating < 0 or rating > 10:
             raise HTTPException(
-                status_code=400, detail="Rating must be between 0 and 10."
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Rating must be between 0 and 10."
             )
 
         user = await self.get_or_create_user(user_id)
@@ -136,7 +138,7 @@ class LikeService:
             (r for r in user.rated_films if r.film_id == film_id), None
         )
         if not existing_rating:
-            raise HTTPException(status_code=404, detail="Rated film not found.")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rated film not found.")
 
         film.average_rating = (
             (film.average_rating * film.raiting_count - existing_rating.score)
@@ -203,7 +205,7 @@ class LikeService:
             Review.user_id == user.id, Review.film_id == film.id
         )
         if not review:
-            raise HTTPException(status_code=404, detail="Review not found.")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Review not found.")
 
         review_id = review.id
         await review.delete()
